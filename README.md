@@ -140,6 +140,6 @@ Build the dive companion we've always wished existed.
 
 # Un-Official Motto
 
-Every dive tells a story.
+Every dive has a story.
 
 Dive Circle helps you remember it.
