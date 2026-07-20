@@ -135,3 +135,11 @@ Planned stack
 # Vision
 
 Build the dive companion we've always wished existed.
+
+---
+
+# Un-Official Motto
+
+Every dive tells a story.
+
+Dive Circle helps you remember it.
