@@ -12,6 +12,11 @@ CREATE TABLE users (
   updated_at TEXT NOT NULL
 );
 
+CREATE TABLE diver_profile (
+  user_id TEXT PRIMARY KEY REFERENCES users(id),
+  starting_lifetime_dive_number INTEGER
+);
+
 CREATE TABLE devices (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL REFERENCES users(id),
@@ -30,9 +35,7 @@ CREATE TABLE user_preferences (
   temperature_unit TEXT NOT NULL DEFAULT 'F',
   pressure_unit TEXT NOT NULL DEFAULT 'psi',
   weight_unit TEXT NOT NULL DEFAULT 'lb',
-  time_format TEXT NOT NULL DEFAULT '12h',
-  next_lifetime_dive_number INTEGER,
-  current_dive_id TEXT
+  time_format TEXT NOT NULL DEFAULT '12h'
 );
 
 CREATE TABLE trips (
@@ -67,6 +70,13 @@ CREATE TABLE dives (
 CREATE UNIQUE INDEX ux_dives_user_lifetime_number
 ON dives(user_id, lifetime_dive_number)
 WHERE status <> 'VOID' AND lifetime_dive_number IS NOT NULL;
+
+CREATE TABLE device_state (
+  device_id TEXT PRIMARY KEY REFERENCES devices(id),
+  user_id TEXT NOT NULL REFERENCES users(id),
+  current_dive_id TEXT REFERENCES dives(id),
+  updated_at TEXT NOT NULL
+);
 
 CREATE INDEX ix_dives_user_date ON dives(user_id, dive_date);
 CREATE INDEX ix_dives_trip ON dives(trip_id);
