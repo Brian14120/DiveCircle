@@ -45,7 +45,9 @@ The cloud service must never silently discard conflicting edits. Conflicts are d
 
 ## 1.3 Current dive is device state
 
-The current/last active Dive Log is stored as user/device state, not as an `is_current` flag on a dive record.
+The current/last active Dive Log is device-specific state. It is stored in `device_state.current_dive_id`, not in `user_preferences` and not as an `is_current` flag on a dive record.
+
+A phone and a web/browser client may therefore each have a different current Dive Log without changing the other.
 
 ---
 
@@ -62,7 +64,7 @@ It answers exactly:
 Examples:
 
 - Dive #37 = the diver's 37th lifetime dive.
-- A diver who already completed 326 dives before joining DiveCircle can begin with Dive #327.
+- A diver who already completed 326 dives before joining DiveCircle sets their **Starting Lifetime Dive Number** to 327, so their first new DiveCircle log is Dive #327.
 
 Rules:
 
@@ -96,7 +98,20 @@ Core fields:
 
 Local databases only need the owner's account/profile subset.
 
-## 3.2 `devices`
+## 3.2 `diver_profile`
+
+Stores diver-specific onboarding/profile facts that are not UI preferences.
+
+Core fields:
+
+- `user_id`
+- `starting_lifetime_dive_number`
+
+`starting_lifetime_dive_number` is the lifetime number assigned to the diver's first new DiveCircle log when they begin using the app. Example: a diver who has already completed 326 lifetime dives starts DiveCircle at **Dive #327**.
+
+This is a baseline, not a running counter. It does not increment as dives are added. The next normal lifetime number is derived from the user's actual non-void dive records, using this baseline when no newer lifetime-numbered dive exists. A deliberate correction workflow may change the baseline if onboarding was entered incorrectly.
+
+## 3.3 `devices`
 
 Tracks app devices participating in sync.
 
@@ -109,9 +124,20 @@ Core fields:
 - `last_sync_at`
 - `created_at`
 
-## 3.3 `user_preferences`
+## 3.4 `device_state`
 
-Stores user-facing defaults and app behavior.
+Stores per-device working state.
+
+Core fields:
+
+- `device_id`
+- `user_id`
+- `current_dive_id` nullable
+- `updated_at`
+
+## 3.5 `user_preferences`
+
+Stores user-facing display/default preferences only.
 
 Core fields:
 
@@ -124,8 +150,6 @@ Core fields:
 - `pressure_unit`
 - `weight_unit`
 - `time_format`
-- `next_lifetime_dive_number`
-- `current_dive_id` nullable for local/device-scoped use where appropriate
 
 ---
 
@@ -773,11 +797,14 @@ Avoid PostgreSQL-native enum types in the shared logical model so values can evo
 
 ```mermaid
 erDiagram
+    USERS ||--|| DIVER_PROFILE : has
     USERS ||--o{ DEVICES : owns
+    DEVICES ||--o| DEVICE_STATE : has
     USERS ||--|| USER_PREFERENCES : has
     USERS ||--o{ TRIPS : owns
     USERS ||--o{ DIVES : owns
 
+    DEVICE_STATE }o--o| DIVES : "points to current"
     TRIPS ||--o{ DIVES : groups
 
     DIVES ||--o| DIVE_LOCATIONS : has
